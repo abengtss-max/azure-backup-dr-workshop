@@ -118,9 +118,9 @@ Your source VM `vm-lab-pNN` and its backup vault were pre-staged by the facilita
 The vault `rsv-lab-backup-pNN` already exists in `rg-lab-backup-pNN`. You will inspect its security posture rather than create a new one.
 
 1. Open **Resource groups** > `rg-lab-backup-pNN` > `rsv-lab-backup-pNN`.
-2. Under **Settings** > **Properties**, open **Backup Configuration** and confirm **Storage replication type** is **Locally-redundant**. (This can only be changed before the first backup; leave it as is.)
-3. Under **Properties** > **Security Settings**, note that **Soft Delete** is **Enabled (Always-on)** with **14 days** retention and cannot be turned off. Do **not** increase the retention — that is the only setting that would add cost.
-4. Confirm **Cross Region Restore** is **Disabled** (not needed for these labs and it would force GRS storage).
+2. Under **Settings** > **Properties**, find **Backup Configuration** and select **Update**. Confirm **Storage replication type** is **Locally-redundant (LRS)**. (This can only be changed before the first backup; leave it as is.)
+3. In that same **Backup Configuration** pane, notice that **Cross Region Restore** is **greyed out / not available** — it only applies to **Geo-redundant (GRS)** storage, and this vault is LRS. That is expected for these labs; do **not** switch to GRS. Close the pane without saving.
+4. Under **Properties** > **Security Settings**, note that **Soft Delete** is **Enabled (Always-on)** with **14 days** retention and cannot be turned off. Do **not** increase the retention — that is the only setting that would add cost.
 
 **Checkpoint:** You can state which vault settings are cost-relevant (storage redundancy, soft-delete retention) and which are irreversible after the first backup (storage redundancy).
 
