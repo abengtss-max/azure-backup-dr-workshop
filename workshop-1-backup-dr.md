@@ -79,7 +79,7 @@ Replace `NN` with your participant number (`01`–`07`). All names are lowercase
 | Source / protected VM | `vm-lab-pNN` (Windows Server 2022 Datacenter: Azure Edition, `Standard_B2as_v2`, no public IP; pre-protected, used in Labs 2–3) | Sweden Central |
 | Practice VM (unprotected) | `vm-lab-cfg-pNN` (same size/subnet, no public IP; you enable backup on this in Lab 1) | Sweden Central |
 | Backup Recovery Services vault | `rsv-lab-backup-pNN` (LRS, cross-region restore off) | Sweden Central |
-| Backup policy | `pol-lab-vm-daily` (daily, 7-day retention) | Sweden Central |
+| Backup policy | `pol-lab-vm-daily` (Standard, daily, 7-day retention) | Sweden Central |
 | Site Recovery vault | `rsv-lab-asr-pNN` | West Europe |
 | Log Analytics workspace | `log-lab-pNN` | Sweden Central |
 | Action group | `ag-lab-pNN` | Global |
@@ -132,7 +132,7 @@ The vault `rsv-lab-backup-pNN` already exists in `rg-lab-backup-pNN`. You will i
 1. In `rsv-lab-backup-pNN`, open **Getting started** > **Backup**.
 2. Set **Where is your workload running?** = **Azure** and **What do you want to backup?** = **Virtual machine**.
 3. Select the **Backup** button (under **Step: Configure Backup**).
-4. On the **Configure Backup** page, next to **Backup policy**, select **Create a new policy**. On the **Create policy** page (**Azure Virtual Machine**), configure:
+4. On the **Configure Backup** page, for the policy type choose **Standard** (the option that reads *Once-a-day backup, Up to 5 days operational tier retention*). This avoids the extra instant-restore snapshot charges that **Enhanced** adds and matches the pre-staged VM. Then, next to **Backup policy**, select **Create a new policy**. On the **Create policy** page (**Azure Virtual Machine**), configure:
    - **Policy name:** `pol-lab-vm-daily`
    - **Backup schedule** → **Frequency:** **Daily**, **Time:** any value (e.g. `23:00`), **Timezone:** **(UTC) Coordinated Universal Time**
    - **Instant restore** → **Retain instant recovery snapshot(s) for:** **1** Day(s) (lowest, to reduce snapshot cost)
@@ -144,6 +144,8 @@ The vault `rsv-lab-backup-pNN` already exists in `rg-lab-backup-pNN`. You will i
 7. Open **Protected items** > **Backup items**. Select the **Azure Virtual Machine** row (the **Backup Item Count** column shows your protected VMs), then in the list select `vm-lab-cfg-pNN`. On the backup item page, select **Backup now**.
 8. In the **Backup now** pane, accept the default **Retain backup till** date (7 days out) and select **OK**. Do not extend it.
 9. Open **Backup center** or the vault's **Backup jobs**, open the running job, and expand the phases (**Take Snapshot**, **Transfer data to vault**). A first recovery point can take 20–60 minutes.
+
+> Until that first backup finishes, `vm-lab-cfg-pNN` shows **Warning — Initial backup pending** with **Latest restore point = "-"**. That is expected for a newly protected VM and clears to **Success** once the job completes.
 
 **Pass criteria:**
 
