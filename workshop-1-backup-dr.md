@@ -90,7 +90,7 @@ Replace `NN` with your participant number (`01`–`07`). All names are lowercase
 **Time:** 60 minutes  
 **Purpose:** Create a vault and policy, protect a VM, and interpret the first job.
 
-Your source VM `vm-lab-pNN` and its backup vault were pre-staged by the facilitator, and a first recovery point already exists (see the facilitator pre-stage appendix). In this lab you re-create the protection configuration yourself on the same VM to learn each decision, then trigger an on-demand backup and read the job.
+Your source VM `vm-lab-pNN` and its backup vault were pre-staged by the facilitator, and a first recovery point already exists. In this lab you re-create the protection configuration yourself on the same VM to learn each decision, then trigger an on-demand backup and read the job.
 
 ### Task 1: Inspect the workload
 
@@ -98,14 +98,7 @@ Your source VM `vm-lab-pNN` and its backup vault were pre-staged by the facilita
 2. On the **Overview** blade, record: **Location** (should be `Sweden Central`), **Operating system** (`Windows`), **Size** (`Standard_B2s`), and **Status**.
 3. Open **Disks** and record the OS disk name `vm-lab-pNN-osdisk` and its SKU. Confirm there is no temporary disk in use for lab data.
 4. Open **Locks** and confirm there is **no** delete or read-only lock that would block backup.
-5. Create the marker file without signing in to the VM. Select **Operations** > **Run command** > **RunPowerShellScript**, paste the script below (change `pNN`), and select **Run**:
-
-   ```powershell
-   New-Item -Path 'C:\LabData' -ItemType Directory -Force | Out-Null
-   "$(Get-Date -Format o) team=pNN" | Set-Content -Path 'C:\LabData\recovery-marker.txt'
-   Get-Content 'C:\LabData\recovery-marker.txt'
-   ```
-
+5. Create the marker file without signing in to the VM. Select **Operations** > **Run command** > **RunPowerShellScript**, paste the small script the facilitator provides (it writes the current time and your team suffix to `C:\LabData\recovery-marker.txt`), and select **Run**.
 6. Confirm the command output shows the timestamp and `team=pNN`.
 
 **Checkpoint:** `C:\LabData\recovery-marker.txt` exists on the OS disk and its contents are recorded in your evidence sheet.
@@ -188,7 +181,7 @@ Use the pre-staged protected VM `vm-lab-pNN`. Work in pairs where possible: divi
 4. When complete, open `vm-lab-pNN-r`:
    - Check **Boot diagnostics** > **Screenshot** shows the Windows sign-in screen.
    - Confirm **Status** is **Running** and it is on the expected subnet with no public IP.
-   - Run **Operations** > **Run command** > **RunPowerShellScript** with `Get-Content 'C:\LabData\recovery-marker.txt'` and confirm the marker matches the selected recovery point.
+   - Use **Operations** > **Run command** > **RunPowerShellScript** to read the marker file back and confirm it matches the selected recovery point.
 
 **Pass criteria:** `vm-lab-pNN-r` is isolated (no public IP), starts successfully, and contains the expected marker from the selected recovery point.
 
@@ -199,7 +192,7 @@ Use the pre-staged protected VM `vm-lab-pNN`. Work in pairs where possible: divi
 
 Initial replication is pre-staged by the facilitator (it takes 30–60+ minutes and cannot be reliably completed inside the slot). Participants must not enable replication against production resources.
 
-> Azure Site Recovery for Azure-to-Azure is **not supported through Azure CLI**. Use the portal (as below) or PowerShell/REST. The Site Recovery vault `rsv-lab-asr-pNN` lives in the **West Europe** target region.
+> Azure Site Recovery for Azure-to-Azure is set up in the portal (as below). The Site Recovery vault `rsv-lab-asr-pNN` lives in the **West Europe** target region.
 
 ### Task 1: Review replication health
 
@@ -228,7 +221,7 @@ Initial replication is pre-staged by the facilitator (it takes 30–60+ minutes 
 
 1. When the test failover completes, open `rg-lab-dr-pNN` and confirm a test VM named `vm-lab-pNN-test` exists and is **Running** in **West Europe**.
 2. Check **Boot diagnostics** > **Screenshot** for the Windows sign-in screen.
-3. Validate the guest via **Run command** > **RunPowerShellScript**: `Get-Content 'C:\LabData\recovery-marker.txt'`.
+3. Validate the guest via **Run command** > **RunPowerShellScript** by reading back the marker file.
 4. Record the **measured RPO** = (test start time − selected recovery-point timestamp).
 5. Record the **measured RTO** = (test start time → moment the marker check succeeded).
 
@@ -281,94 +274,6 @@ Follow this order. None of these steps incur soft-delete charges because retenti
 4. **Stop VM backup:** in `rsv-lab-backup-pNN` > **Backup items** > `vm-lab-pNN` > **Stop backup** > **Delete backup data**. The item moves to a soft-deleted state (free, 14 days) and then auto-purges.
 5. Delete the source `vm-lab-pNN` and its disks, then delete the three resource groups `rg-lab-backup-pNN`, `rg-lab-restore-pNN`, and `rg-lab-dr-pNN`. On Azure CLI 2.75+ / the portal, the vault can be deleted while it holds only soft-deleted items; it then auto-purges for free.
 6. **Do not extend soft-delete retention** at any point — that is the only action that would turn free soft delete into a charge.
-
-## Facilitator Pre-stage Appendix (run 24+ hours before delivery)
-
-The fastest path is the ready-made script `scripts/prestage-workshop1.ps1`, which builds every resource below with the exact names and settings used in this guide. Populate the participant-to-subscription map and run it:
-
-```powershell
-$subs = @{
-    '01' = '<participant-01-subscription-id>'
-    '02' = '<participant-02-subscription-id>'
-    '03' = '<participant-03-subscription-id>'
-    '04' = '<participant-04-subscription-id>'
-    '05' = '<participant-05-subscription-id>'
-    '06' = '<participant-06-subscription-id>'
-    '07' = '<participant-07-subscription-id>'
-}
-
-# Infra + backup for all seven participants:
-./scripts/prestage-workshop1.ps1 -Subscriptions $subs
-
-# Add Site Recovery replication (long-running) and a notification email:
-./scripts/prestage-workshop1.ps1 -Subscriptions $subs -EnableSiteRecovery -NotificationEmail 'facilitator@contoso.com'
-```
-
-The script requires Azure CLI (`az login`) and, only when `-EnableSiteRecovery` is used, Azure PowerShell (`Connect-AzAccount`). The equivalent commands are shown below for reference if you prefer to run them by hand. Each attendee has their **own subscription**, so the loop iterates over the seven participant subscription IDs and builds one identical environment in each. Site Recovery A2A steps use PowerShell/portal because Azure CLI does not support A2A.
-
-```powershell
-$src = 'swedencentral'; $dr = 'westeurope'
-$adminUser = 'labadmin'
-# Prompt for the password interactively; never hard-code it.
-$adminPass = Read-Host -AsSecureString 'VM admin password' | ConvertFrom-SecureString -AsPlainText
-
-# Map each participant number to their dedicated subscription ID.
-$subs = @{
-    '01' = '<participant-01-subscription-id>'
-    '02' = '<participant-02-subscription-id>'
-    '03' = '<participant-03-subscription-id>'
-    '04' = '<participant-04-subscription-id>'
-    '05' = '<participant-05-subscription-id>'
-    '06' = '<participant-06-subscription-id>'
-    '07' = '<participant-07-subscription-id>'
-}
-
-foreach ($NN in ($subs.Keys | Sort-Object)) {
-    az account set --subscription $subs[$NN]
-    Write-Host "=== Participant p$NN in subscription $($subs[$NN]) ==="
-
-    # Per-subscription prep: register providers (each subscription is independent)
-    foreach ($p in 'Microsoft.RecoveryServices','Microsoft.DataProtection','Microsoft.Compute','Microsoft.Network','Microsoft.Storage','Microsoft.Insights','Microsoft.OperationalInsights') {
-        az provider register --namespace $p | Out-Null
-    }
-
-    $rgSrc='rg-lab-backup-p'+$NN; $rgRest='rg-lab-restore-p'+$NN; $rgDr='rg-lab-dr-p'+$NN
-    $vm='vm-lab-p'+$NN; $vnet='vnet-lab-src-p'+$NN; $nsg='nsg-lab-p'+$NN
-    $rsv='rsv-lab-backup-p'+$NN
-
-    az group create -n $rgSrc -l $src -o none
-    az group create -n $rgRest -l $src -o none
-    az group create -n $rgDr -l $dr -o none
-
-    az network nsg create -g $rgSrc -n $nsg -l $src -o none
-    az network vnet create -g $rgSrc -n $vnet -l $src --address-prefixes 10.10.0.0/24 `
-        --subnet-name snet-workload --subnet-prefixes 10.10.0.0/26 --network-security-group $nsg -o none
-
-    # Source VM: Windows Server 2022, B2s, no public IP
-    az vm create -g $rgSrc -n $vm -l $src --image Win2022Datacenter --size Standard_B2s `
-        --vnet-name $vnet --subnet snet-workload --nsg '' --public-ip-address '' `
-        --os-disk-name ($vm+'-osdisk') --admin-username $adminUser --admin-password $adminPass -o none
-
-    # Seed the marker file via Run Command (no inbound access needed)
-    az vm run-command invoke -g $rgSrc -n $vm --command-id RunPowerShellScript `
-        --scripts "New-Item -Path 'C:\LabData' -ItemType Directory -Force | Out-Null; Set-Content -Path 'C:\LabData\recovery-marker.txt' -Value 'prestaged team=p$NN'" -o none
-
-    # Backup vault: force LRS BEFORE the first backup, leave soft delete at default 14 days (free)
-    az backup vault create -g $rgSrc -n $rsv -l $src -o none
-    az backup vault backup-properties set -g $rgSrc -n $rsv --backup-storage-redundancy LocallyRedundant -o none
-
-    # Daily policy, 7-day retention, then protect and take a first recovery point
-    az backup protection enable-for-vm -g $rgSrc -v $rsv --vm $vm --policy-name DefaultPolicy -o none
-    az backup protection backup-now -g $rgSrc -v $rsv -c $vm -i $vm `
-        --retain-until (Get-Date).AddDays(7).ToString('dd-MM-yyyy') --backup-management-type AzureIaasVM -o none
-
-    Write-Host "Prestaged p$NN (backup started; recovery point ready in ~30-60 min)"
-}
-```
-
-For **each** subscription, also verify quota once before the run (`az vm list-usage --location swedencentral` and `--location westeurope`) and confirm no deny policy is present (`az policy assignment list --disable-scope-strict-match`). Then, for **Site Recovery**, enable Azure-to-Azure replication from `vm-lab-pNN` (Sweden Central) to `rg-lab-dr-pNN` / `vnet-lab-dr-pNN` (West Europe) using the portal (**VM > Disaster recovery > Enable replication**, target region **West Europe**) or the `Az.RecoveryServices` PowerShell module, and confirm each replicated item is **Healthy** before delivery. Create `log-lab-pNN`, `ag-lab-pNN`, and diagnostic settings, and run one full test-failover/cleanup cycle as a smoke test in at least one subscription.
-
-> **Cost note for the facilitator:** the DR test network `vnet-lab-dr-pNN` (`10.20.0.0/24`) and any restore network are created by ASR/participants during replication and restore. Keep the `Standard_B2s` size, deallocate source VMs outside workshop hours, and remove replicated disks/cache by disabling replication at cleanup. Because each subscription is disposable, the cleanest teardown is to delete the whole subscription's resource groups (or decommission the subscription) after evidence is captured.
 
 ## Reference Links
 
