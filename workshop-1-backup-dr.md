@@ -126,18 +126,20 @@ The vault `rsv-lab-backup-pNN` already exists in `rg-lab-backup-pNN`. You will i
 
 ### Task 3: Configure protection and run an on-demand backup
 
-1. In `rsv-lab-backup-pNN`, select **Backup** (under **Getting started** or **Protected items**).
-2. Set **Datasource type** = **Azure Virtual machines** and **Where is the workload running?** = **Azure**. Select **Continue / Backup**.
-3. Under **Backup policy**, choose **Create a new policy** and configure:
+1. In `rsv-lab-backup-pNN`, open **Getting started** > **Backup**.
+2. Set **Where is your workload running?** = **Azure** and **What do you want to backup?** = **Virtual machine**.
+3. Select the **Backup** button (under **Step: Configure Backup**).
+4. On the **Configure Backup** page, next to **Backup policy**, select **Create a new policy** and configure:
    - **Policy name:** `pol-lab-vm-daily`
    - **Backup schedule:** **Daily**, time any value, time zone **UTC**
    - **Instant Restore:** snapshot retention **1 day** (lowest, to reduce snapshot cost)
    - **Retention of daily backup point:** **7 days**
    - Leave weekly/monthly/yearly retention **disabled**.
-4. Under **Virtual Machines** > **Add**, select `vm-lab-pNN` and choose **OK**, then **Enable backup**. Watch the deployment notification succeed.
-5. Open **rsv-lab-backup-pNN** > **Backup items** > **Azure Virtual Machine** > `vm-lab-pNN`. Select **Backup now**.
-6. In the **Backup now** pane, accept the default **Retain backup till** date (7 days out) and select **OK**. Do not extend it.
-7. Open **Backup center** or the vault's **Backup jobs**, then open the running job. Expand the phases (**Take Snapshot**, **Transfer data to vault**) and note that a first recovery point may take 20–60 minutes.
+5. Under **Virtual machines**, select **Add**, tick `vm-lab-pNN`, and choose **OK**.
+6. Select **Enable backup** and watch the deployment notification succeed.
+7. In the vault, open **Protected items** > **Backup items** > **Azure Virtual Machine** > `vm-lab-pNN`, then select **Backup now**.
+8. In the **Backup now** pane, accept the default **Retain backup till** date (7 days out) and select **OK**. Do not extend it.
+9. Open **Backup center** or the vault's **Backup jobs**, then open the running job. Expand the phases (**Take Snapshot**, **Transfer data to vault**) and note that a first recovery point may take 20–60 minutes.
 
 **Pass criteria:**
 
