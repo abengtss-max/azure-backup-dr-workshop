@@ -150,7 +150,6 @@ The vault `rsv-lab-backup-pNN` already exists in `rg-lab-backup-pNN`. You will i
 **Pass criteria:**
 
 - `vm-lab-cfg-pNN` appears under **Backup items** with policy `pol-lab-vm-daily`.
-- The on-demand job starts without an authorization or `RequestDisallowedByPolicy` error.
 - You can explain why the already-protected `vm-lab-pNN` did **not** appear in the **Add** list.
 
 > The on-demand backup may not finish inside the lab slot. Lab 2 uses the recovery point that the facilitator pre-staged on `vm-lab-pNN` at least 24 hours earlier.
