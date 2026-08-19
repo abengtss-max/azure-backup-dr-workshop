@@ -76,7 +76,8 @@ Replace `NN` with your participant number (`01`–`07`). All names are lowercase
 | Source virtual network | `vnet-lab-src-pNN` (`10.10.0.0/24`, subnet `snet-workload` `10.10.0.0/26`) | Sweden Central |
 | DR test virtual network | `vnet-lab-dr-pNN` (`10.20.0.0/24`, subnet `snet-workload` `10.20.0.0/26`) | West Europe |
 | Network security group | `nsg-lab-pNN` (no inbound rules; management uses portal **Run command**) | Sweden Central |
-| Source VM | `vm-lab-pNN` (Windows Server 2022 Datacenter: Azure Edition, `Standard_B2as_v2`, no public IP) | Sweden Central |
+| Source / protected VM | `vm-lab-pNN` (Windows Server 2022 Datacenter: Azure Edition, `Standard_B2as_v2`, no public IP; pre-protected, used in Labs 2–3) | Sweden Central |
+| Practice VM (unprotected) | `vm-lab-cfg-pNN` (same size/subnet, no public IP; you enable backup on this in Lab 1) | Sweden Central |
 | Backup Recovery Services vault | `rsv-lab-backup-pNN` (LRS, cross-region restore off) | Sweden Central |
 | Backup policy | `pol-lab-vm-daily` (daily, 7-day retention) | Sweden Central |
 | Site Recovery vault | `rsv-lab-asr-pNN` | West Europe |
@@ -90,7 +91,7 @@ Replace `NN` with your participant number (`01`–`07`). All names are lowercase
 **Time:** 60 minutes  
 **Purpose:** Create a vault and policy, protect a VM, and interpret the first job.
 
-Your source VM `vm-lab-pNN` and its backup vault were pre-staged by the facilitator, and a first recovery point already exists. In this lab you re-create the protection configuration yourself on the same VM to learn each decision, then trigger an on-demand backup and read the job.
+Two VMs were pre-staged for you: `vm-lab-pNN` is **already protected** (its recovery point is used in Labs 2 and 3), and `vm-lab-cfg-pNN` is **left unprotected** so you can run the full configure-backup wizard yourself. In this lab you inspect the protected VM and vault, then create a policy and enable backup on the unprotected VM.
 
 ### Task 1: Inspect the workload
 
@@ -126,6 +127,8 @@ The vault `rsv-lab-backup-pNN` already exists in `rg-lab-backup-pNN`. You will i
 
 ### Task 3: Configure protection and run an on-demand backup
 
+`vm-lab-pNN` is already protected (its recovery point is used in Lab 2), so it will **not** appear in the Configure Backup **Add** list — that list only offers **unprotected** VMs. For this task you protect the second VM, `vm-lab-cfg-pNN`, so you can walk the full policy-and-enable flow yourself.
+
 1. In `rsv-lab-backup-pNN`, open **Getting started** > **Backup**.
 2. Set **Where is your workload running?** = **Azure** and **What do you want to backup?** = **Virtual machine**.
 3. Select the **Backup** button (under **Step: Configure Backup**).
@@ -136,19 +139,19 @@ The vault `rsv-lab-backup-pNN` already exists in `rg-lab-backup-pNN`. You will i
    - **Retention range** → keep **Retention of daily backup point** ticked and set **For** = **7** Day(s). Leave **weekly**, **monthly**, and **yearly** retention **unticked** (Not Configured).
    - Leave **Enable tiering** unticked and **Consistency type** unticked (do **not** enable "Only crash consistent snapshot"). Leave **Azure Backup Resource Group (Optional)** blank.
    - Select **OK** to create the policy.
-5. Under **Virtual machines**, select **Add**, tick `vm-lab-pNN`, and choose **OK**.
+5. Under **Virtual machines**, select **Add**, tick `vm-lab-cfg-pNN`, and choose **OK**. (Only unprotected VMs appear here — that is why `vm-lab-pNN` is not listed.)
 6. Select **Enable backup** and watch the deployment notification succeed.
-7. In the vault, open **Protected items** > **Backup items** > **Azure Virtual Machine** > `vm-lab-pNN`, then select **Backup now**.
+7. In the vault, open **Protected items** > **Backup items** > **Azure Virtual Machine** > `vm-lab-cfg-pNN`, then select **Backup now**.
 8. In the **Backup now** pane, accept the default **Retain backup till** date (7 days out) and select **OK**. Do not extend it.
-9. Open **Backup center** or the vault's **Backup jobs**, then open the running job. Expand the phases (**Take Snapshot**, **Transfer data to vault**) and note that a first recovery point may take 20–60 minutes.
+9. Open **Backup center** or the vault's **Backup jobs**, open the running job, and expand the phases (**Take Snapshot**, **Transfer data to vault**). A first recovery point can take 20–60 minutes.
 
 **Pass criteria:**
 
-- `vm-lab-pNN` appears under **Backup items** with policy `pol-lab-vm-daily`.
+- `vm-lab-cfg-pNN` appears under **Backup items** with policy `pol-lab-vm-daily`.
 - The on-demand job starts without an authorization or `RequestDisallowedByPolicy` error.
-- You can point to the pre-staged recovery point that Lab 2 will use, and explain that the on-demand job you just started will only be needed if you want a fresher point.
+- You can explain why the already-protected `vm-lab-pNN` did **not** appear in the **Add** list.
 
-> The on-demand backup may not finish inside the lab slot. Lab 2 uses the recovery point that the facilitator pre-staged at least 24 hours earlier.
+> The on-demand backup may not finish inside the lab slot. Lab 2 uses the recovery point that the facilitator pre-staged on `vm-lab-pNN` at least 24 hours earlier.
 
 ## Lab 2: Perform Recovery Operations
 
@@ -284,7 +287,7 @@ Follow this order. None of these steps incur soft-delete charges because retenti
 1. Confirm every **test failover** was cleaned up in Lab 3 (`vm-lab-pNN-test` must not exist).
 2. Delete restored resources once evidence is captured: `vm-lab-pNN-r`, restored disks, and any staging storage in `rg-lab-restore-pNN`.
 3. **Disable Site Recovery replication:** in `rsv-lab-asr-pNN` > **Replicated items** > `vm-lab-pNN` > **Disable Replication** (choose the option that also removes ASR-created resources). This stops replicated-disk and cache-storage cost — the main DR cost driver.
-4. **Stop VM backup:** in `rsv-lab-backup-pNN` > **Backup items** > `vm-lab-pNN` > **Stop backup** > **Delete backup data**. The item moves to a soft-deleted state (free, 14 days) and then auto-purges.
+4. **Stop VM backup** for each protected item — `vm-lab-pNN` and `vm-lab-cfg-pNN` — in `rsv-lab-backup-pNN` > **Backup items** > *(item)* > **Stop backup** > **Delete backup data**. Each moves to a soft-deleted state (free, 14 days) and then auto-purges.
 5. Delete the source `vm-lab-pNN` and its disks, then delete the three resource groups `rg-lab-backup-pNN`, `rg-lab-restore-pNN`, and `rg-lab-dr-pNN`. On Azure CLI 2.75+ / the portal, the vault can be deleted while it holds only soft-deleted items; it then auto-purges for free.
 6. **Do not extend soft-delete retention** at any point — that is the only action that would turn free soft delete into a charge.
 
