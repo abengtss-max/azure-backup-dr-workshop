@@ -76,7 +76,7 @@ Replace `NN` with your participant number (`01`–`07`). All names are lowercase
 | Source virtual network | `vnet-lab-src-pNN` (`10.10.0.0/24`, subnet `snet-workload` `10.10.0.0/26`) | Sweden Central |
 | DR test virtual network | `vnet-lab-dr-pNN` (`10.20.0.0/24`, subnet `snet-workload` `10.20.0.0/26`) | West Europe |
 | Network security group | `nsg-lab-pNN` (no inbound rules; management uses portal **Run command**) | Sweden Central |
-| Source VM | `vm-lab-pNN` (Windows Server 2022 Datacenter: Azure Edition, `Standard_B2s`, no public IP) | Sweden Central |
+| Source VM | `vm-lab-pNN` (Windows Server 2022 Datacenter: Azure Edition, `Standard_B2as_v2`, no public IP) | Sweden Central |
 | Backup Recovery Services vault | `rsv-lab-backup-pNN` (LRS, cross-region restore off) | Sweden Central |
 | Backup policy | `pol-lab-vm-daily` (daily, 7-day retention) | Sweden Central |
 | Site Recovery vault | `rsv-lab-asr-pNN` | West Europe |
@@ -95,7 +95,7 @@ Your source VM `vm-lab-pNN` and its backup vault were pre-staged by the facilita
 ### Task 1: Inspect the workload
 
 1. In the [Azure portal](https://portal.azure.com), open **Resource groups** > `rg-lab-backup-pNN` > `vm-lab-pNN`.
-2. On the **Overview** blade, record: **Location** (should be `Sweden Central`), **Operating system** (`Windows`), **Size** (`Standard_B2s`), and **Status**.
+2. On the **Overview** blade, record: **Location** (should be `Sweden Central`), **Operating system** (`Windows`), **Size** (`Standard_B2as_v2`), and **Status**.
 3. Open **Disks** and record the OS disk name `vm-lab-pNN-osdisk` and its SKU. Confirm there is no temporary disk in use for lab data.
 4. Open **Locks** and confirm there is **no** delete or read-only lock that would block backup.
 5. Create the marker file without signing in to the VM. Select **Operations** > **Run command** > **RunPowerShellScript**, paste the small script the facilitator provides (it writes the current time and your team suffix to `C:\LabData\recovery-marker.txt`), and select **Run**.
