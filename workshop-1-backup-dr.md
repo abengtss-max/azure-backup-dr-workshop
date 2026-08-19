@@ -165,7 +165,7 @@ Use the pre-staged protected VM `vm-lab-pNN`. Work in pairs where possible: divi
 
 1. Open `rsv-lab-backup-pNN` > **Protected items** > **Backup items**, then select the **Azure Virtual Machine** row to list the protected VMs.
 2. On the `vm-lab-pNN` row, select the **⋯** (more) button at the end of the row (or **View details**), then choose **File Recovery**.
-3. Under **Step 1**, choose the pre-staged recovery point (note its UTC timestamp on your evidence sheet).
+3. Under **Step 1: Select restore point**, select the **Select** link next to **Restore point**, choose the pre-staged recovery point from the list, and confirm. Note its UTC timestamp on your evidence sheet.
 4. Under **Step 2**, select **Download Executable** to download the iSCSI mount script, and copy the shown password.
 5. Run the downloaded `.exe` on **your own workstation** (or a facilitator-provided jump machine) and paste the password when prompted. The script mounts the recovery point as a local volume and prints the drive letters.
 6. Open the mounted volume, browse to `\LabData\`, and copy `recovery-marker.txt` to a local folder such as `C:\restore-pNN\`.
