@@ -97,7 +97,14 @@ Your source VM `vm-lab-pNN` and its backup vault were pre-staged by the facilita
 1. In the [Azure portal](https://portal.azure.com), open **Resource groups** > `rg-lab-backup-pNN` > `vm-lab-pNN`.
 2. On the **Overview** blade, record: **Location** (should be `Sweden Central`), **Operating system** (`Windows`), **Size** (`Standard_B2as_v2`), and **Status**.
 3. Open **Disks** and record the OS disk name `vm-lab-pNN-osdisk` and its SKU. Confirm there is no temporary disk in use for lab data.
-4. Open **Locks** and confirm there is **no** delete or read-only lock that would block backup.
+4. Confirm there are **no resource locks** that would block backup or cleanup:
+   1. In the `vm-lab-pNN` left menu, scroll to the **Settings** group and select **Locks**.
+   2. Confirm the list is **empty** ("No locks" / no rows). An empty list means the VM has no lock of its own.
+   3. Locks are **inherited** from parent scopes, so also check the resource group: open **Resource groups** > `rg-lab-backup-pNN` > **Settings** > **Locks** and confirm that list is empty too. (To be thorough you can repeat at the subscription: **Subscriptions** > your subscription > **Settings** > **Resource locks**.)
+   4. If any lock is listed, read its **Lock type** column. A **Read-only** lock stops you configuring backup; a **Delete** lock stops cleanup. Either one must be removed for this lab.
+   5. To remove a lock (only if you own the scope): select the lock's **⋯** (or the row) and choose **Delete**, then confirm. If you cannot remove it, stop and tell the facilitator.
+
+   > Optional check from **Cloud Shell** (PowerShell or Bash): `az lock list --resource-group rg-lab-backup-pNN -o table`. An empty result means there are no locks on the resource group or on the VM inside it.
 5. Create the marker file without signing in to the VM. Select **Operations** > **Run command** > **RunPowerShellScript**, paste the small script the facilitator provides (it writes the current time and your team suffix to `C:\LabData\recovery-marker.txt`), and select **Run**.
 6. Confirm the command output shows the timestamp and `team=pNN`.
 
