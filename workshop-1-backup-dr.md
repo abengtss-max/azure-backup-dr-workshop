@@ -163,8 +163,8 @@ Use the pre-staged protected VM `vm-lab-pNN`. Work in pairs where possible: divi
 
 ### Task 1: Recover a single file (Item-Level Recovery)
 
-1. Open `rsv-lab-backup-pNN` > **Protected items** > **Backup items**, select the **Azure Virtual Machine** row, then in the list select `vm-lab-pNN`.
-2. Select **File Recovery**.
+1. Open `rsv-lab-backup-pNN` > **Protected items** > **Backup items**, then select the **Azure Virtual Machine** row to list the protected VMs.
+2. On the `vm-lab-pNN` row, select the **⋯** (more) button at the end of the row (or **View details**), then choose **File Recovery**.
 3. Under **Step 1**, choose the pre-staged recovery point (note its UTC timestamp on your evidence sheet).
 4. Under **Step 2**, select **Download Executable** to download the iSCSI mount script, and copy the shown password.
 5. Run the downloaded `.exe` on **your own workstation** (or a facilitator-provided jump machine) and paste the password when prompted. The script mounts the recovery point as a local volume and prints the drive letters.
@@ -176,7 +176,7 @@ Use the pre-staged protected VM `vm-lab-pNN`. Work in pairs where possible: divi
 
 ### Task 2: Restore disks
 
-1. In `vm-lab-pNN` backup item, select **Restore VM** > **Restore disks**.
+1. On the `vm-lab-pNN` row (**Backup items** > **Azure Virtual Machine**), open the **⋯** menu and select **Restore VM**, then choose **Restore disks**.
 2. Configure:
    - **Recovery point:** the pre-staged point.
    - **Resource group:** `rg-lab-restore-pNN`.
@@ -187,7 +187,7 @@ Use the pre-staged protected VM `vm-lab-pNN`. Work in pairs where possible: divi
 
 ### Task 3: Restore a full VM
 
-1. In `vm-lab-pNN` backup item, select **Restore VM** > **Create new VM**.
+1. On the `vm-lab-pNN` row (**Backup items** > **Azure Virtual Machine**), open the **⋯** menu and select **Restore VM**, then choose **Create new VM**.
 2. Configure:
    - **Virtual machine name:** `vm-lab-pNN-r` (unique; must not clash with the source).
    - **Resource group:** `rg-lab-restore-pNN`.
