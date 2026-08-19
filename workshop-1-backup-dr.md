@@ -141,7 +141,7 @@ The vault `rsv-lab-backup-pNN` already exists in `rg-lab-backup-pNN`. You will i
    - Select **OK** to create the policy.
 5. Under **Virtual machines**, select **Add**, tick `vm-lab-cfg-pNN`, and choose **OK**. (Only unprotected VMs appear here — that is why `vm-lab-pNN` is not listed.)
 6. Select **Enable backup** and watch the deployment notification succeed.
-7. In the vault, open **Protected items** > **Backup items** > **Azure Virtual Machine** > `vm-lab-cfg-pNN`, then select **Backup now**.
+7. Open **Protected items** > **Backup items**. Select the **Azure Virtual Machine** row (the **Backup Item Count** column shows your protected VMs), then in the list select `vm-lab-cfg-pNN`. On the backup item page, select **Backup now**.
 8. In the **Backup now** pane, accept the default **Retain backup till** date (7 days out) and select **OK**. Do not extend it.
 9. Open **Backup center** or the vault's **Backup jobs**, open the running job, and expand the phases (**Take Snapshot**, **Transfer data to vault**). A first recovery point can take 20–60 minutes.
 
@@ -162,7 +162,7 @@ Use the pre-staged protected VM `vm-lab-pNN`. Work in pairs where possible: divi
 
 ### Task 1: Recover a single file (Item-Level Recovery)
 
-1. Open `rsv-lab-backup-pNN` > **Backup items** > **Azure Virtual Machine** > `vm-lab-pNN`.
+1. Open `rsv-lab-backup-pNN` > **Protected items** > **Backup items**, select the **Azure Virtual Machine** row, then in the list select `vm-lab-pNN`.
 2. Select **File Recovery**.
 3. Under **Step 1**, choose the pre-staged recovery point (note its UTC timestamp on your evidence sheet).
 4. Under **Step 2**, select **Download Executable** to download the iSCSI mount script, and copy the shown password.
