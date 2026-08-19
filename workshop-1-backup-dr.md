@@ -174,6 +174,8 @@ Use the pre-staged protected VM `vm-lab-pNN`. Work in pairs where possible: divi
 
 **Checkpoint:** The restored marker is readable, its recovery-point time is recorded, and the recovery disks are unmounted (leaving them mounted keeps a snapshot lease open).
 
+> **Troubleshooting the recovery script:** if it reports `Cannot find any service with service name 'MSiSCSI'` (or "Exception caught while connecting to Target"), the **Microsoft iSCSI Initiator Service** isn't running. As an administrator, run `Start-Service msiscsi`; if the service is still not found, launch the **iSCSI Initiator** app (`iscsicpl`) and click **Yes** to start it automatically, then re-run the script. The recovery machine must be **Windows** (same OS family as the backed-up VM) with outbound internet access to Azure. If a locked-down corporate laptop blocks iSCSI, run the script on a facilitator-provided Windows **jump VM** instead.
+
 ### Task 2: Restore disks
 
 1. On the `vm-lab-pNN` row (**Backup items** > **Azure Virtual Machine**), open the **⋯** menu and select **Restore VM**, then choose **Restore disks**.
