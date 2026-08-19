@@ -105,7 +105,10 @@ Your source VM `vm-lab-pNN` and its backup vault were pre-staged by the facilita
    5. To remove a lock (only if you own the scope): select the lock's **⋯** (or the row) and choose **Delete**, then confirm. If you cannot remove it, stop and tell the facilitator.
 
    > Optional check from **Cloud Shell** (PowerShell or Bash): `az lock list --resource-group rg-lab-backup-pNN -o table`. An empty result means there are no locks on the resource group or on the VM inside it.
-5. Create the marker file without signing in to the VM. Select **Operations** > **Run command** > **RunPowerShellScript**, paste the small script the facilitator provides (it writes the current time and your team suffix to `C:\LabData\recovery-marker.txt`), and select **Run**.
+5. Create the marker file without signing in to the VM:
+   1. Download the script: [create-recovery-marker.ps1](scripts/create-recovery-marker.ps1).
+   2. In `vm-lab-pNN`, select **Operations** > **Run command** > **RunPowerShellScript**.
+   3. Open the downloaded file, copy its full contents into the command box, and select **Run**. The script detects your `pNN` automatically, creates `C:\LabData\recovery-marker.txt`, and prints it back.
 6. Confirm the command output shows the timestamp and `team=pNN`.
 
 **Checkpoint:** `C:\LabData\recovery-marker.txt` exists on the OS disk and its contents are recorded in your evidence sheet.
