@@ -129,12 +129,13 @@ The vault `rsv-lab-backup-pNN` already exists in `rg-lab-backup-pNN`. You will i
 1. In `rsv-lab-backup-pNN`, open **Getting started** > **Backup**.
 2. Set **Where is your workload running?** = **Azure** and **What do you want to backup?** = **Virtual machine**.
 3. Select the **Backup** button (under **Step: Configure Backup**).
-4. On the **Configure Backup** page, next to **Backup policy**, select **Create a new policy** and configure:
+4. On the **Configure Backup** page, next to **Backup policy**, select **Create a new policy**. On the **Create policy** page (**Azure Virtual Machine**), configure:
    - **Policy name:** `pol-lab-vm-daily`
-   - **Backup schedule:** **Daily**, time any value, time zone **UTC**
-   - **Instant Restore:** snapshot retention **1 day** (lowest, to reduce snapshot cost)
-   - **Retention of daily backup point:** **7 days**
-   - Leave weekly/monthly/yearly retention **disabled**.
+   - **Backup schedule** → **Frequency:** **Daily**, **Time:** any value (e.g. `23:00`), **Timezone:** **(UTC) Coordinated Universal Time**
+   - **Instant restore** → **Retain instant recovery snapshot(s) for:** **1** Day(s) (lowest, to reduce snapshot cost)
+   - **Retention range** → keep **Retention of daily backup point** ticked and set **For** = **7** Day(s). Leave **weekly**, **monthly**, and **yearly** retention **unticked** (Not Configured).
+   - Leave **Enable tiering** unticked and **Consistency type** unticked (do **not** enable "Only crash consistent snapshot"). Leave **Azure Backup Resource Group (Optional)** blank.
+   - Select **OK** to create the policy.
 5. Under **Virtual machines**, select **Add**, tick `vm-lab-pNN`, and choose **OK**.
 6. Select **Enable backup** and watch the deployment notification succeed.
 7. In the vault, open **Protected items** > **Backup items** > **Azure Virtual Machine** > `vm-lab-pNN`, then select **Backup now**.
