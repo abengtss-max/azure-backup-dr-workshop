@@ -29,7 +29,7 @@ By the end of this workshop, participants can:
 
 ## Cost and Soft Delete — Read This First
 
-The customer requirement is to avoid surprise cost, especially from soft delete. Here is the accurate, Microsoft-Learn-aligned position that these labs are built on:
+The requirement is to avoid surprise cost, especially from soft delete. Here is the accurate, Microsoft-Learn-aligned position that these labs are built on:
 
 - **Soft delete can no longer be turned off** on a Recovery Services vault. New vaults are created with soft delete **Always-on** and a 14-day retention. This is enforced by Azure for all public regions (including Sweden Central) and is *not* something the facilitator can or should try to disable.
 - **Soft delete at the default 14-day retention costs nothing.** Microsoft Learn: *"There's no retention cost for the default soft-delete duration of 14 days for vaulted backups."* Charges only begin if retention is extended **beyond** 14 days.
@@ -47,6 +47,7 @@ flowchart LR
         VM["vm-lab-pNN"]
         RSV1["rsv-lab-backup-pNN"]
         VNet1["vnet-lab-src-pNN"]
+        NAT1["nat-lab-pNN (outbound)"]
     end
     subgraph Recovery[West Europe - DR target]
         RSV2["rsv-lab-asr-pNN"]
@@ -62,6 +63,7 @@ flowchart LR
     Replica -.->|Test failover only| TestVM
     TestVM --- VNet2
     VM --- VNet1
+    VNet1 --- NAT1
 ```
 
 ## Naming Convention
@@ -76,13 +78,16 @@ Replace `NN` with your participant number (`01`–`07`). All names are lowercase
 | Source virtual network | `vnet-lab-src-pNN` (`10.10.0.0/24`, subnet `snet-workload` `10.10.0.0/26`) | Sweden Central |
 | DR test virtual network | `vnet-lab-dr-pNN` (`10.20.0.0/24`, subnet `snet-workload` `10.20.0.0/26`) | West Europe |
 | Network security group | `nsg-lab-pNN` (no inbound rules; management uses portal **Run command**) | Sweden Central |
+| Outbound NAT gateway | `nat-lab-pNN` with public IP `pip-nat-lab-pNN`, attached to `snet-workload` (gives the VMs outbound internet with **no inbound exposure**) | Sweden Central |
 | Source / protected VM | `vm-lab-pNN` (Windows Server 2022 Datacenter: Azure Edition, `Standard_B2as_v2`, no public IP; pre-protected, used in Labs 2–3) | Sweden Central |
 | Practice VM (unprotected) | `vm-lab-cfg-pNN` (same size/subnet, no public IP; you enable backup on this in Lab 1) | Sweden Central |
 | Backup Recovery Services vault | `rsv-lab-backup-pNN` (LRS, cross-region restore off) | Sweden Central |
-| Backup policy | `pol-lab-vm-daily` (Standard, daily, 7-day retention) | Sweden Central |
+| Backup policy | `pol-lab-vm-daily` (Standard policy, daily, 7-day retention) | Sweden Central |
 | Site Recovery vault | `rsv-lab-asr-pNN` | West Europe |
 | Log Analytics workspace | `log-lab-pNN` | Sweden Central |
-| Action group | `ag-lab-pNN` | Global |
+| Action group | `ag-lab-pNN` (facilitator email receiver) | Global |
+| Backup-health alert rule | `alert-backup-health-pNN` (metric alert on `rsv-lab-backup-pNN`, wired to `ag-lab-pNN`) | Global |
+| Vault diagnostic settings | `diag-lab-pNN` (backup vault) and `diag-asr-lab-pNN` (Site Recovery vault), both to `log-lab-pNN` | Sweden Central |
 
 > **Why portal Run command instead of RDP/Bastion?** It needs no public IP, no inbound port 445/3389, and no Azure Bastion, so it is both cheaper and more secure. It also works against a *restored* VM, which is exactly what you need to validate recovery. Participants who prefer an interactive session can ask the facilitator to attach the shared Bastion, but it is not required for any task.
 
@@ -174,7 +179,10 @@ Use the pre-staged protected VM `vm-lab-pNN`. Work in pairs where possible: divi
 
 **Checkpoint:** The restored marker is readable, its recovery-point time is recorded, and the recovery disks are unmounted (leaving them mounted keeps a snapshot lease open).
 
-> **Troubleshooting the recovery script:** if it reports `Cannot find any service with service name 'MSiSCSI'` (or "Exception caught while connecting to Target"), the **Microsoft iSCSI Initiator Service** isn't running. As an administrator, run `Start-Service msiscsi`; if the service is still not found, launch the **iSCSI Initiator** app (`iscsicpl`) and click **Yes** to start it automatically, then re-run the script. The recovery machine must be **Windows** (same OS family as the backed-up VM) with outbound internet access to Azure. If a locked-down corporate laptop blocks iSCSI, run the script on a facilitator-provided Windows **jump VM** instead.
+> **Troubleshooting the recovery script:** the Item-Level Recovery script mounts the recovery point over **iSCSI**, so the machine you run it on must be **Windows x64** with the **Microsoft iSCSI Initiator Service (`MSiSCSI`)** available and outbound internet access to Azure.
+> - If `MSiSCSI` exists but is stopped, start it as administrator: `Start-Service msiscsi` (or launch `iscsicpl` and click **Yes**).
+> - **`The specified service does not exist` / `Cannot find any service 'MSiSCSI'`** means the initiator is not present. This is expected on **Windows on ARM64** (ARM64 Windows does not ship the iSCSI Initiator) and on some locked-down devices. Run the downloaded script on a **Windows x64** machine or a facilitator-provided Windows **jump VM** instead (Azure Windows VMs include the initiator).
+> - If you cannot run the script at all, you can still validate the same recovery point with **Restore disks** or **Create new VM** (Tasks 2–3) — those run entirely in the Azure portal and do not use iSCSI.
 
 ### Task 2: Restore disks
 
@@ -200,7 +208,7 @@ Use the pre-staged protected VM `vm-lab-pNN`. Work in pairs where possible: divi
 4. When complete, open `vm-lab-pNN-r`:
    - Check **Boot diagnostics** > **Screenshot** shows the Windows sign-in screen.
    - Confirm **Status** is **Running** and it is on the expected subnet with no public IP.
-   - Use **Operations** > **Run command** > **RunPowerShellScript** to read the marker file back and confirm it matches the selected recovery point.
+   - Run **Operations** > **Run command** > **RunPowerShellScript** with `Get-Content 'C:\LabData\recovery-marker.txt'` and confirm the marker matches the selected recovery point.
 
 **Pass criteria:** `vm-lab-pNN-r` is isolated (no public IP), starts successfully, and contains the expected marker from the selected recovery point.
 
@@ -240,7 +248,7 @@ Initial replication is pre-staged by the facilitator (it takes 30–60+ minutes 
 
 1. When the test failover completes, open `rg-lab-dr-pNN` and confirm a test VM named `vm-lab-pNN-test` exists and is **Running** in **West Europe**.
 2. Check **Boot diagnostics** > **Screenshot** for the Windows sign-in screen.
-3. Validate the guest via **Run command** > **RunPowerShellScript** by reading back the marker file.
+3. Validate the guest via **Run command** > **RunPowerShellScript**: `Get-Content 'C:\LabData\recovery-marker.txt'`.
 4. Record the **measured RPO** = (test start time − selected recovery-point timestamp).
 5. Record the **measured RTO** = (test start time → moment the marker check succeeded).
 
@@ -268,8 +276,8 @@ Initial replication is pre-staged by the facilitator (it takes 30–60+ minutes 
 ### Task 2: Review notification routing
 
 1. Open `ag-lab-pNN` (Azure Monitor **Action groups**) and review the email receiver configured by the facilitator.
-2. In **Backup center** > **Alerts** (or **Monitor** > **Alerts**), review rules for **failed backup jobs**, **unhealthy backup instances**, and **Site Recovery replication health**.
-3. Confirm severity, evaluation frequency, and the notification owner. Do **not** send test alerts to any production channel.
+2. In **Monitor** > **Alerts** > **Alert rules**, open `alert-backup-health-pNN` — a metric alert on the backup vault's **Backup Health Events** wired to `ag-lab-pNN`. Note its **severity** and **evaluation frequency**. For **Site Recovery replication health**, review the built-in Azure Site Recovery alerts under `rsv-lab-asr-pNN` > **Monitoring** > **Alerts** (ASR raises these automatically on replication-health changes).
+3. Confirm the vault **diagnostic settings** (`diag-lab-pNN`, `diag-asr-lab-pNN`) are streaming logs to `log-lab-pNN`, then confirm severity, evaluation frequency, and the notification owner. Do **not** send test alerts to any production channel.
 
 ### Task 3: Triage a failure injection
 
